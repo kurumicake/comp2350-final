@@ -25,12 +25,11 @@ router.get('/', async (req, res) => {
 });
 
 
-router.get('/moveItemUp', async (req, res) => {
-	console.log("Move Item Up");
+router.get('/increaseQuantity', async (req, res) => {
 	console.log(req.query);
 	let itemId = req.query.id;
 	if (itemId) {
-		const success = await dbModel.moveItemUp(itemId);
+		const success = await dbModel.increaseQuantity(itemId);
 		if (success) {
 			res.redirect("/");
 		}
@@ -59,12 +58,11 @@ router.get('/addItem', async (req, res) => {
 	}
 });
 
-router.get('/moveItemDown', async (req, res) => {
-	console.log("Move Item Down");
+router.get('/decreaseQuantity', async (req, res) => {
 	console.log(req.query);
 	let itemId = req.query.id;
 	if (itemId) {
-		const success = await dbModel.moveItemDown(itemId);
+		const success = await dbModel.decreaseQuantity(itemId);
 		if (success) {
 			res.redirect("/");
 		}

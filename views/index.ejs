@@ -35,14 +35,14 @@
                 <td><%= allItems[i].cost %></td>
                 <td><%= allItems[i].quantity %></td>
                 <td>
-                  <a href="/moveItemUp?id=<%= allItems[i].purchase_item_id %>">
+                  <a href="/increaseQuantity?id=<%= allItems[i].purchase_item_id %>">
                     <span class="icon is-small">
                       <i class="fas fa-caret-square-up"></i> </span
                   ></a>
                 </td>
                 <td>
                   <a
-                    href="/moveItemDown?id=<%= allItems[i].purchase_item_id %>"
+                    href="/decreaseQuantity?id=<%= allItems[i].purchase_item_id %>"
                   >
                     <span class="icon is-small">
                       <i class="fas fa-caret-square-down"></i> </span

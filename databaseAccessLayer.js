@@ -19,113 +19,65 @@ async function getAllItems() {
 }
 
 async function addItem(postData) {
-    let sqlInsertItem = `
+	let sqlInsertItem = `
         INSERT INTO purchase_item (item_name, item_description, cost, quantity)
         VALUES (:item_name, :item_description, :cost, :quantity);
     `;
-    let params = {
-        item_name: postData.item_name,
-        item_description: postData.item_description,
-        cost: postData.cost,
-        quantity: postData.quantity
-    };
-    try {
-        const results = await database.query(sqlInsertItem, params);
-        return true;
-    }
-    catch (err) {
-        console.error("Error inserting into Purchase Item table", err);
-        return false;
-    }
+	let params = {
+		item_name: postData.item_name,
+		item_description: postData.item_description,
+		cost: postData.cost,
+		quantity: postData.quantity
+	};
+	try {
+		const results = await database.query(sqlInsertItem, params);
+		return true;
+	}
+	catch (err) {
+		console.error("Error inserting into Purchase Item table", err);
+		return false;
+	}
 }
 
-
-async function moveItemUp(purchaseItemId) {
-    await database.query('START TRANSACTION;');
-
-    let sqlFindOrder = `
-        SELECT sort_order FROM purchase_item WHERE purchase_item_id = :purchaseItemId;
+async function increaseQuantity(purchaseItemId) {
+	let sqlIncreaseQuantity = `
+        UPDATE purchase_item
+        SET quantity = quantity + 1
+        WHERE purchase_item_id = :purchaseItemId;
     `;
-    
-    try {
-        const currentOrderResults = await database.query(sqlFindOrder, { purchaseItemId });
-        if (currentOrderResults.length === 0) {
-            throw new Error('Item not found.');
-        }
-        const currentOrder = currentOrderResults[0].sort_order;
-        
-        let sqlFindSwap = `
-            SELECT purchase_item_id, sort_order FROM purchase_item WHERE sort_order < :currentOrder ORDER BY sort_order DESC LIMIT 1;
-        `;
-        const swapResults = await database.query(sqlFindSwap, { currentOrder });
-        if (swapResults.length === 0) {
-            throw new Error('No item to swap with.');
-        }
-        const swapItem = swapResults[0];
-        
-        let sqlSwap = `
-            UPDATE purchase_item SET sort_order = CASE WHEN purchase_item_id = :currentItemId THEN :swapOrder ELSE :currentOrder END
-            WHERE purchase_item_id IN (:currentItemId, :swapItemId);
-        `;
-        await database.query(sqlSwap, {
-            currentItemId: purchaseItemId,
-            currentOrder: currentOrder,
-            swapItemId: swapItem.purchase_item_id,
-            swapOrder: swapItem.sort_order
-        });
-
-        await database.query('COMMIT;');
-        return true;
-    }
-    catch (err) {
-        await database.query('ROLLBACK;');
-        console.error("Error moving item up in Purchase Item table", err);
-        return false;
-    }
+	let params = {
+		purchaseItemId: purchaseItemId
+	};
+	try {
+		await database.query(sqlIncreaseQuantity, params);
+		return true;
+	}
+	catch (err) {
+		console.error("Error increasing quantity in Purchase Item table", err);
+		return false;
+	}
 }
 
-async function moveItemDown(purchaseItemId) {
-    await database.query('START TRANSACTION;');
-
-    let sqlFindOrder = `
-        SELECT sort_order FROM purchase_item WHERE purchase_item_id = :purchaseItemId;
+async function decreaseQuantity(purchaseItemId) {
+	let sqlDecreaseQuantity = `
+        UPDATE purchase_item
+        SET quantity = CASE 
+                         WHEN quantity > 0 THEN quantity - 1 
+                         ELSE 0 
+                       END
+        WHERE purchase_item_id = :purchaseItemId;
     `;
-    
-    try {
-        const currentOrderResults = await database.query(sqlFindOrder, { purchaseItemId });
-        if (currentOrderResults.length === 0) {
-            throw new Error('Item not found.');
-        }
-        const currentOrder = currentOrderResults[0].sort_order;
-        
-        let sqlFindSwap = `
-            SELECT purchase_item_id, sort_order FROM purchase_item WHERE sort_order > :currentOrder ORDER BY sort_order ASC LIMIT 1;
-        `;
-        const swapResults = await database.query(sqlFindSwap, { currentOrder });
-        if (swapResults.length === 0) {
-            throw new Error('No item to swap with.');
-        }
-        const swapItem = swapResults[0];
-        
-        let sqlSwap = `
-            UPDATE purchase_item SET sort_order = CASE WHEN purchase_item_id = :currentItemId THEN :swapOrder ELSE :currentOrder END
-            WHERE purchase_item_id IN (:currentItemId, :swapItemId);
-        `;
-        await database.query(sqlSwap, {
-            currentItemId: purchaseItemId,
-            currentOrder: currentOrder,
-            swapItemId: swapItem.purchase_item_id,
-            swapOrder: swapItem.sort_order
-        });
-
-        await database.query('COMMIT;');
-        return true;
-    }
-    catch (err) {
-        await database.query('ROLLBACK;');
-        console.error("Error moving item down in Purchase Item table", err);
-        return false;
-    }
+	let params = {
+		purchaseItemId: purchaseItemId
+	};
+	try {
+		await database.query(sqlDecreaseQuantity, params);
+		return true;
+	}
+	catch (err) {
+		console.error("Error decreasing quantity in Purchase Item table", err);
+		return false;
+	}
 }
 
 
@@ -148,4 +100,4 @@ async function deletePurchaseItem(purchaseItemId) {
 	}
 }
 
-module.exports = { getAllItems, moveItemUp, moveItemDown, deletePurchaseItem, addItem };
+module.exports = { getAllItems, increaseQuantity, decreaseQuantity, deletePurchaseItem, addItem };
