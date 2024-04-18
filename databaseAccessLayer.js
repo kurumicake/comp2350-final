@@ -19,25 +19,26 @@ async function getAllItems() {
 }
 
 async function addItem(postData) {
-let sqlInsertSalt = `
-INSERT INTO purchase_item (item_name, item_description, cost, quantity)
-VALUES (:item_name, :item_description, :cost, :quantity));
-`;
-let params = {
-item_name: postData.item_name,
-item_description: postData.item_description,
-cost: postData.cost,
-quantity: postData.quantity
-};
-try {
-const results = await database.query(params);
-return true;
+    let sqlInsertItem = `
+        INSERT INTO purchase_item (item_name, item_description, cost, quantity)
+        VALUES (:item_name, :item_description, :cost, :quantity);
+    `;
+    let params = {
+        item_name: postData.item_name,
+        item_description: postData.item_description,
+        cost: postData.cost,
+        quantity: postData.quantity
+    };
+    try {
+        const results = await database.query(sqlInsertItem, params);
+        return true;
+    }
+    catch (err) {
+        console.error("Error inserting into Purchase Item table", err);
+        return false;
+    }
 }
-catch (err) {
-console.log(err);
-return false;
-}
-}
+
 
 async function moveItemUp(purchaseItemId) {
 	let sqlMoveUp = `
