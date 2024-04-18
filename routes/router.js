@@ -42,7 +42,7 @@ router.get('/moveItemUp', async (req, res) => {
 	}
 });
 
-router.get('/addItems', async (req, res) => {
+router.get('/addItem', async (req, res) => {
 	console.log("Add Item");
 	console.log(req.query);
 	let itemId = req.query.id;

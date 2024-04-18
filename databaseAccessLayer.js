@@ -41,42 +41,93 @@ async function addItem(postData) {
 
 
 async function moveItemUp(purchaseItemId) {
-	let sqlMoveUp = `
-        UPDATE purchase_item p1, purchase_item p2
-        SET p1.sort_order = p1.sort_order - 1, p2.sort_order = p2.sort_order + 1
-        WHERE p1.purchase_item_id = :purchaseItemId AND p2.sort_order = p1.sort_order - 1;
+    await database.query('START TRANSACTION;');
+
+    let sqlFindOrder = `
+        SELECT sort_order FROM purchase_item WHERE purchase_item_id = :purchaseItemId;
     `;
-	let params = {
-		purchaseItemId: purchaseItemId
-	};
-	try {
-		await database.query(sqlMoveUp, params);
-		return true;
-	}
-	catch (err) {
-		console.error("Error moving item up in Purchase Item table", err);
-		return false;
-	}
+    
+    try {
+        const currentOrderResults = await database.query(sqlFindOrder, { purchaseItemId });
+        if (currentOrderResults.length === 0) {
+            throw new Error('Item not found.');
+        }
+        const currentOrder = currentOrderResults[0].sort_order;
+        
+        let sqlFindSwap = `
+            SELECT purchase_item_id, sort_order FROM purchase_item WHERE sort_order < :currentOrder ORDER BY sort_order DESC LIMIT 1;
+        `;
+        const swapResults = await database.query(sqlFindSwap, { currentOrder });
+        if (swapResults.length === 0) {
+            throw new Error('No item to swap with.');
+        }
+        const swapItem = swapResults[0];
+        
+        let sqlSwap = `
+            UPDATE purchase_item SET sort_order = CASE WHEN purchase_item_id = :currentItemId THEN :swapOrder ELSE :currentOrder END
+            WHERE purchase_item_id IN (:currentItemId, :swapItemId);
+        `;
+        await database.query(sqlSwap, {
+            currentItemId: purchaseItemId,
+            currentOrder: currentOrder,
+            swapItemId: swapItem.purchase_item_id,
+            swapOrder: swapItem.sort_order
+        });
+
+        await database.query('COMMIT;');
+        return true;
+    }
+    catch (err) {
+        await database.query('ROLLBACK;');
+        console.error("Error moving item up in Purchase Item table", err);
+        return false;
+    }
 }
 
 async function moveItemDown(purchaseItemId) {
-	let sqlMoveDown = `
-	UPDATE purchase_item p1, purchase_item p2
-	SET p1.sort_order = p1.sort_order + 1, p2.sort_order = p2.sort_order - 1
-	WHERE p1.purchase_item_id = :purchaseItemId AND p2.sort_order = p1.sort_order + 1;
-`;
-	let params = {
-		purchaseItemId: purchaseItemId
-	};
-	try {
-		await database.query(sqlMoveDown, params);
-		return true;
-	}
-	catch (err) {
-		console.error("Error moving item down in Purchase Item table", err);
-		return false;
-	}
+    await database.query('START TRANSACTION;');
+
+    let sqlFindOrder = `
+        SELECT sort_order FROM purchase_item WHERE purchase_item_id = :purchaseItemId;
+    `;
+    
+    try {
+        const currentOrderResults = await database.query(sqlFindOrder, { purchaseItemId });
+        if (currentOrderResults.length === 0) {
+            throw new Error('Item not found.');
+        }
+        const currentOrder = currentOrderResults[0].sort_order;
+        
+        let sqlFindSwap = `
+            SELECT purchase_item_id, sort_order FROM purchase_item WHERE sort_order > :currentOrder ORDER BY sort_order ASC LIMIT 1;
+        `;
+        const swapResults = await database.query(sqlFindSwap, { currentOrder });
+        if (swapResults.length === 0) {
+            throw new Error('No item to swap with.');
+        }
+        const swapItem = swapResults[0];
+        
+        let sqlSwap = `
+            UPDATE purchase_item SET sort_order = CASE WHEN purchase_item_id = :currentItemId THEN :swapOrder ELSE :currentOrder END
+            WHERE purchase_item_id IN (:currentItemId, :swapItemId);
+        `;
+        await database.query(sqlSwap, {
+            currentItemId: purchaseItemId,
+            currentOrder: currentOrder,
+            swapItemId: swapItem.purchase_item_id,
+            swapOrder: swapItem.sort_order
+        });
+
+        await database.query('COMMIT;');
+        return true;
+    }
+    catch (err) {
+        await database.query('ROLLBACK;');
+        console.error("Error moving item down in Purchase Item table", err);
+        return false;
+    }
 }
+
 
 async function deletePurchaseItem(purchaseItemId) {
 	let sqlDeleteItem = `
