@@ -1,50 +1,87 @@
 const router = require('express').Router();
 const database = include('databaseConnection');
 const dbModel = include('databaseAccessLayer');
-//const dbModel = include('staticData');
 
 router.get('/', async (req, res) => {
-	console.log("page hit");
+    console.log("page hit");
+    
+    try {
+        const items = await dbModel.getAllItems();
+        // ! Calculate the total cost here
+        const totalCost = items.reduce((acc, item) => {
+            return acc + (parseFloat(item.cost) * parseInt(item.quantity));
+        }, 0);
 
-	try {
-		const result = await dbModel.getAllUsers();
-		res.render('index', { allUsers: result });
+        res.render('index', {
+            allItems: items,
+            totalCost: totalCost
+        });
+        console.log("here is result: ", items);
+    }
+    catch (err) {
+        res.render('error', {message: 'Error reading from MySQL'});
+        console.log("Error reading from mysql", err);
+    }
+});
 
-		//Output the results of the query to the Heroku Logs
-		console.log(result);
-	}
-	catch (err) {
-		res.render('error', { message: 'Error reading from MySQL' });
-		console.log("Error reading from mysql");
+
+router.get('/moveItemUp', async (req, res) => {
+	console.log("Move Item Up");
+	console.log(req.query);
+	let itemId = req.query.id;
+	if (itemId) {
+		const success = await dbModel.moveItemUp(itemId);
+		if (success) {
+			res.redirect("/");
+		}
+		else {
+			res.render('error', { message: 'Error writing to MySQL' });
+			console.log("Error writing to mysql");
+			console.log(err);
+		}
 	}
 });
 
-router.post('/addUser', async (req, res) => {
-	console.log("form submit");
-	console.log(req);
-	try {
-	const success = await dbModel.addUser(req.body);
-	if (success) {
-	res.redirect("/");
-	}
-	else {
-	res.render('error', {message: "Error writing to MySQL"});
-	console.log("Error writing to MySQL");
-	}
-	}
-	catch (err) {
-	res.render('error', {message: "Error writing to MySQL"});
-	console.log("Error writing to MySQL");
-	console.log(err);
-	}
-	});
-
-router.get('/deleteUser', async (req, res) => {
-	console.log("delete user");
+router.get('/addItems', async (req, res) => {
+	console.log("Add Item");
 	console.log(req.query);
-	let userId = req.query.id;
-	if (userId) {
-		const success = await dbModel.deleteUser(userId);
+	let itemId = req.query.id;
+	if (itemId) {
+		const success = await dbModel.addItem(itemId);
+		if (success) {
+			res.redirect("/");
+		}
+		else {
+			res.render('error', { message: 'Error writing to MySQL' });
+			console.log("Error writing to mysql");
+			console.log(err);
+		}
+	}
+});
+
+router.get('/moveItemDown', async (req, res) => {
+	console.log("Move Item Down");
+	console.log(req.query);
+	let itemId = req.query.id;
+	if (itemId) {
+		const success = await dbModel.moveItemDown(itemId);
+		if (success) {
+			res.redirect("/");
+		}
+		else {
+			res.render('error', { message: 'Error writing to MySQL' });
+			console.log("Error writing to mysql");
+			console.log(err);
+		}
+	}
+});
+
+router.get('/deletePurchaseItem', async (req, res) => {
+	console.log("delete Item");
+	console.log(req.query);
+	let itemId = req.query.id;
+	if (itemId) {
+		const success = await dbModel.deletePurchaseItem(itemId);
 		if (success) {
 			res.redirect("/");
 		}

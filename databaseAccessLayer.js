@@ -1,11 +1,10 @@
 const database = include('/databaseConnection');
 
 
-async function getAllUsers() {
+async function getAllItems() {
 	let sqlQuery = `
-		SELECT web_user_id, first_name, last_name, email
-		FROM web_user;
-	`;
+	SELECT purchase_item_id, item_name, item_description, cost, quantity FROM purchase_item
+`;
 
 	try {
 		const results = await database.query(sqlQuery);
@@ -13,40 +12,25 @@ async function getAllUsers() {
 		return results[0];
 	}
 	catch (err) {
-		console.log("Error selecting from todo table");
+		console.log("Error selecting from Purchase Items table");
 		console.log(err);
 		return null;
 	}
 }
 
-const passwordPepper = "SeCretPeppa4MyMe0ws";
-
-async function addUser(postData) {
+async function addItem(postData) {
 let sqlInsertSalt = `
-INSERT INTO web_user (first_name, last_name, email, password_salt)
-VALUES (:first_name, :last_name, :email, sha2(UUID(),512));
+INSERT INTO purchase_item (item_name, item_description, cost, quantity)
+VALUES (:item_name, :item_description, :cost, :quantity));
 `;
 let params = {
-first_name: postData.first_name,
-last_name: postData.last_name,
-email: postData.email
+item_name: postData.item_name,
+item_description: postData.item_description,
+cost: postData.cost,
+quantity: postData.quantity
 };
-console.log(sqlInsertSalt);
 try {
-const results = await database.query(sqlInsertSalt, params);
-let insertedID = results.insertId;
-let updatePasswordHash = `
-UPDATE web_user
-SET password_hash = sha2(concat(:password,:pepper,password_salt),512)
-WHERE web_user_id = :userId;
-`;
-let params2 = {
-password: postData.password,
-pepper: passwordPepper,
-userId: insertedID
-}
-console.log(updatePasswordHash);
-const results2 = await database.query(updatePasswordHash, params2);
+const results = await database.query(params);
 return true;
 }
 catch (err) {
@@ -55,23 +39,61 @@ return false;
 }
 }
 
-async function deleteUser(webUserId) {
-	let sqlDeleteUser = `
-	DELETE FROM web_user
-	WHERE web_user_id = :userID
-	`;
+async function moveItemUp(purchaseItemId) {
+	let sqlMoveUp = `
+        UPDATE purchase_item p1, purchase_item p2
+        SET p1.sort_order = p1.sort_order - 1, p2.sort_order = p2.sort_order + 1
+        WHERE p1.purchase_item_id = :purchaseItemId AND p2.sort_order = p1.sort_order - 1;
+    `;
 	let params = {
-		userID: webUserId
+		purchaseItemId: purchaseItemId
 	};
-	console.log(sqlDeleteUser);
 	try {
-		await database.query(sqlDeleteUser, params);
+		await database.query(sqlMoveUp, params);
 		return true;
 	}
 	catch (err) {
-		console.log(err);
+		console.error("Error moving item up in Purchase Item table", err);
 		return false;
 	}
 }
 
-module.exports = { getAllUsers, addUser, deleteUser }
+async function moveItemDown(purchaseItemId) {
+	let sqlMoveDown = `
+	UPDATE purchase_item p1, purchase_item p2
+	SET p1.sort_order = p1.sort_order + 1, p2.sort_order = p2.sort_order - 1
+	WHERE p1.purchase_item_id = :purchaseItemId AND p2.sort_order = p1.sort_order + 1;
+`;
+	let params = {
+		purchaseItemId: purchaseItemId
+	};
+	try {
+		await database.query(sqlMoveDown, params);
+		return true;
+	}
+	catch (err) {
+		console.error("Error moving item down in Purchase Item table", err);
+		return false;
+	}
+}
+
+async function deletePurchaseItem(purchaseItemId) {
+	let sqlDeleteItem = `
+			DELETE FROM purchase_item
+			WHERE purchase_item_id = :purchaseItemId
+		`;
+	let params = {
+		purchaseItemId: purchaseItemId
+	};
+	console.log(sqlDeleteItem);
+	try {
+		await database.query(sqlDeleteItem, params);
+		return true;
+	}
+	catch (err) {
+		console.error("Error deleting from Purchase Item table", err);
+		return false;
+	}
+}
+
+module.exports = { getAllItems, moveItemUp, moveItemDown, deletePurchaseItem, addItem };

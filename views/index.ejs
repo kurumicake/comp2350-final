@@ -14,85 +14,105 @@
         <div
           class="column is-10 is-offset-1 notification is-info is-light box container"
         >
-          <div class="title">Web Users</div>
-          <% if (locals.allUsers) { %>
+          <div class="title">Purchase Items</div>
+          <% if (locals.allItems) { %>
           <div class="table-container">
             <table class="table is-bordered is-hoverable is-striped is-narrow">
               <thead>
                 <tr>
-                  <th>Firstname</th>
-                  <th>Lastname</th>
-                  <th>Email</th>
-                  <th>&nbsp; &nbsp;</th>
+                  <th>Name</th>
+                    <th>Description</th>
+                    <th>Cost</th>
+                    <th>Quantity</th> 
+                    <th>&nbsp; &nbsp;</th>
+                    <th>&nbsp; &nbsp;</th>
                 </tr>
               </thead>
-              <% let i=0; %> <% for(i=0; i < allUsers.length; i++) { %>
+              <% let i=0; %> <% for(i=0; i < allItems.length; i++) { %>
               <tr>
-                <td><%= allUsers[i].first_name %></td>
-                <td><%= allUsers[i].last_name %></td>
-                <td><%= allUsers[i].email %></td>
+                <td><%= allItems[i].item_name %></td>
+                <td><%= allItems[i].item_description %></td>
+                <td><%= allItems[i].cost %></td>
+                <td><%= allItems[i].quantity %></td>
                 <td>
-                  <a href="/deleteUser?id=<%= allUsers[i].web_user_id %>">
+                  <a href="/moveItemUp?id=<%= allItems[i].purchase_item_id %>">
                     <span class="icon is-small">
-                      <i class="fas fa-user-times"></i> </span
+                      <i class="fas fa-caret-square-up"></i> </span
+                  ></a>
+                </td>
+                <td>
+                  <a
+                    href="/moveItemDown?id=<%= allItems[i].purchase_item_id %>"
+                  >
+                    <span class="icon is-small">
+                      <i class="fas fa-caret-square-down"></i> </span
+                  ></a>
+                </td>
+                <td>
+                  <a
+                    href="/deletePurchaseItem?id=<%= allItems[i].purchase_item_id %>"
+                  >
+                    <span class="icon is-small">
+						<i class="fas fa-trash"></i> </span
                   ></a>
                 </td>
               </tr>
               <% } %>
               <tfoot>
                 <tr>
-                  <td colspan="4">There are <%= i %> users.</td>
+                  <td colspan="4">There are <%= allItems.length %> items for a total of $<%=
+                    totalCost.toFixed(2) %>.</td>
                 </tr>
               </tfoot>
             </table>
           </div>
           <% } %>
-          <form action="/addUser" method="post">
+          <form action="/addItem" method="post">
             <div class="field is-horizontal">
               <div class="field-label is-normal">
-                <label class="label">Add New User</label>
+                <label class="label">Add New Item</label>
               </div>
               <div class="field-body">
                 <div class="field">
                   <p class="control is-expanded">
                     <input
-                      name="first_name"
-                      id="first_name"
+                      name="item_name"
+                      id="item_name"
                       class="input"
                       type="text"
-                      placeholder="First Name"
+                      placeholder="Item Name"
                     />
                   </p>
                 </div>
                 <div class="field">
                   <p class="control is-expanded">
                     <input
-                      name="last_name"
-                      id="last_name"
+                      name="item_description"
+                      id="item_description"
                       class="input"
                       type="text"
-                      placeholder="Last Name"
+                      placeholder="Item Description"
                     />
                   </p>
                 </div>
                 <div class="field">
                   <p class="control is-expanded">
                     <input
-                      name="email"
-                      id="email"
+                      name="cost"
+                      id="cost"
                       class="input"
-                      type="email"
-                      placeholder="Email"
+                      type="text"
+                      placeholder="Cost"
                     />
                   </p>
                 </div>
                 <div class="field">
                   <p class="control is-expanded">
                     <input
-                      name="password"
+                      name="quantity"
                       class="input"
-                      type="password"
-                      placeholder="Password"
+                      type="text"
+                      placeholder="Quantity"
                     />
                   </p>
                 </div>
